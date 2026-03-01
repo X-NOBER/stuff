@@ -2,8 +2,8 @@
 
 <script>
   window.loaderConfig = {
-    "assetName": "clprecisionclient",
-    "assetParts": 8,
+    assetName: "clprecisionclient",
+    assetParts: 8
   }
 </script>
 
@@ -11,78 +11,88 @@
 body {
   background: rgb(30,30,30);
   overflow: hidden;
+  margin: 0;
 }
 
 .container {
+  display: flex;
   justify-content: center;
-  text-align: center;
   align-items: center;
+  text-align: center;
+  height: 100vh;
 }
 
 h1 {
   color: white;
   font-family: Arial;
-  font-size: 2.5rem
+  font-size: 2.5rem;
 }
-  </style>
+</style>
 
 <div class="container">
   <h1>Loading [...]</h1>
-  </div>
+</div>
 
 <script>
 
-  async function fetchWithProgress(url) {
-    document.querySelector("h1").textContent = `Loading [${url.split("https://cdn.jsdelivr.net/gh/Zotronix/egc/assets/")[1]}]`
-    const response = await fetch(url);
-    const reader = response.body.getReader();
-    let chunks = [];
-    let received = 0;
-    while (true) {
-    const {
-    done,
-    value
-    } = await reader.read();
+const CDN_BASE = "https://cdn.jsdelivr.net/gh/Zotronix/egc@main/assets/";
+
+async function fetchWithProgress(url) {
+  const label = document.querySelector("h1");
+  label.textContent = `Loading [${url.replace(CDN_BASE, "")}]`;
+
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Failed to fetch " + url);
+
+  const reader = response.body.getReader();
+  let chunks = [];
+  let received = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
     if (done) break;
     received += value.length;
     chunks.push(value);
-    }
-    let fullBuffer = new Uint8Array(received);
-    let offset = 0;
-    for (let chunk of chunks) {
+  }
+
+  const fullBuffer = new Uint8Array(received);
+  let offset = 0;
+
+  for (const chunk of chunks) {
     fullBuffer.set(chunk, offset);
     offset += chunk.length;
-    }
-    return fullBuffer.buffer;
   }
 
-  async function mergeFiles(parts, finalName) {
-    const buffers = await Promise.all(parts.map(part => fetchWithProgress(part)));
-    const mergedBlob = new Blob(buffers);
-    return URL.createObjectURL(mergedBlob);
+  return fullBuffer.buffer;
+}
+
+async function mergeFiles(parts) {
+  const buffers = await Promise.all(parts.map(fetchWithProgress));
+  return URL.createObjectURL(new Blob(buffers));
+}
+
+async function initLaunch() {
+  const { assetName, assetParts } = window.loaderConfig;
+  const parts = [];
+
+  for (let i = 1; i <= assetParts; i++) {
+    parts.push(`${CDN_BASE}${assetName}.html.part${i}.bin`);
   }
 
-  async function initLaunch() {
-    const config = window.loaderConfig;
-    let parts = [];
+  const mergedUrl = await mergeFiles(parts);
 
-    for (let i=1; i < config.assetParts + 1; i++) {
-      const assetName = "https://cdn.jsdelivr.net/gh/Zotronix/egc/assets/" + config.assetName + ".html.part" + i + ".bin";
-      parts.push(assetName);
-    }
-    
-    const url = await mergeFiles(parts);
-    document.querySelector("h1").textContent = "Loading [" + url + "]"
-    const b = await fetch(url);
-    const text = await b.text();
+  document.querySelector("h1").textContent = "Launching...";
 
-    document.open();
-    document.write(text);
-    document.close();
-    
-  }
+  const response = await fetch(mergedUrl);
+  const text = await response.text();
 
-  document.addEventListener("load", initLaunch());
+  document.open();
+  document.write(text);
+  document.close();
+}
+
+window.addEventListener("load", initLaunch);
+
 </script>
 
 </html>
