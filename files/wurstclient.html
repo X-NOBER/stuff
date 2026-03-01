@@ -33,7 +33,7 @@ h1 {
 <script>
 
   async function fetchWithProgress(url) {
-    document.querySelector("h1").textContent = `Loading [${url.split("https://cdn.jsdelivr.net/gh/Zotronix/egc/assets/")[1]}]`
+    document.querySelector("h1").textContent = `Loading [${url.split("https://cdn.jsdelivr.net/gh/X-NOBER/stuff@main/assets/")[1]}]`
     const response = await fetch(url);
     const reader = response.body.getReader();
     let chunks = [];
@@ -67,7 +67,7 @@ h1 {
     let parts = [];
 
     for (let i=1; i < config.assetParts + 1; i++) {
-      const assetName = "https://cdn.jsdelivr.net/gh/Zotronix/egc/assets/" + config.assetName + ".html.part" + i + ".bin";
+      const assetName = "https://cdn.jsdelivr.net/gh/X-NOBER/stuff@main/assets/" + config.assetName + ".html.part" + i + ".bin";
       parts.push(assetName);
     }
     
@@ -84,5 +84,6 @@ h1 {
 
   document.addEventListener("load", initLaunch());
 </script>
+
 
 </html>
